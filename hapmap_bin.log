@@ -1,0 +1,32 @@
+PLINK v2.0.0-a.6.0LM 64-bit Intel (11 Nov 2024)
+Options in effect:
+  --make-bed
+  --map hapmap1.map
+  --out hapmap_bin
+  --ped hapmap1.ped
+
+Hostname: pop-os
+Working directory: /home/evgenija/Desktop/Evgenija Gagaleska /famnit 3rd year/Evolution-and-population-genetics
+Start time: Tue Nov 19 15:36:12 2024
+
+Random number seed: 1732026972
+15386 MiB RAM detected, ~5359 available; reserving 5295 MiB for main workspace.
+Using up to 16 threads (change this with --threads).
+--pedmap: 83534 variants in .map file.
+--pedmap: 89 samples present, genotypes extracted to
+hapmap_bin-temporary.bed.smaj .
+Transposing sample-major .bed to hapmap_bin-temporary.pgen , and setting major
+alleles to provisional-REF.
+Transpose complete.
+--pedmap: hapmap_bin-temporary.pgen + hapmap_bin-temporary.pvar +
+hapmap_bin-temporary.psam written. .bed.smaj and .fam.tmp temporary files
+deleted.
+89 samples (0 females, 89 males; 89 founders) loaded from
+hapmap_bin-temporary.psam.
+83534 variants loaded from hapmap_bin-temporary.pvar.
+1 binary phenotype loaded (44 cases, 45 controls).
+Writing hapmap_bin.fam ... done.
+Writing hapmap_bin.bim ... done.
+Writing hapmap_bin.bed ... done.
+
+End time: Tue Nov 19 15:36:12 2024

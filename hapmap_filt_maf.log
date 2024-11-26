@@ -1,0 +1,27 @@
+PLINK v2.0.0-a.6.0LM 64-bit Intel (11 Nov 2024)
+Options in effect:
+  --maf 0.05
+  --make-pgen
+  --out hapmap_filt_maf
+  --pfile hapmap_filt_miss
+
+Hostname: pop-os
+Working directory: /home/evgenija/Desktop/Evgenija Gagaleska /famnit 3rd year/Evolution-and-population-genetics
+Start time: Tue Nov 19 16:19:51 2024
+
+Random number seed: 1732029591
+15386 MiB RAM detected, ~5070 available; reserving 5006 MiB for main workspace.
+Using up to 16 threads (change this with --threads).
+89 samples (0 females, 89 males; 89 founders) loaded from
+hapmap_filt_miss.psam.
+81400 variants loaded from hapmap_filt_miss.pvar.
+1 binary phenotype loaded (44 cases, 45 controls).
+Calculating allele frequencies... done.
+23711 variants removed due to allele frequency threshold(s)
+(--maf/--max-maf/--mac/--max-mac).
+57689 variants remaining after main filters.
+Writing hapmap_filt_maf.psam ... done.
+Writing hapmap_filt_maf.pvar ... done.
+Writing hapmap_filt_maf.pgen ... done.
+
+End time: Tue Nov 19 16:19:51 2024
