@@ -1,0 +1,763 @@
+---
+title: "pop_froh_admixture"
+author: "Urška Gerič"
+date: "2024-12-09"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##### Try to do pca at home and recreate the plots from the article
+##### ENA accession numbers are from EMBL
+
+LIBRARIES
+
+```{r libraries}
+# Load the required libraries
+library(dartR)
+library(detectRUNS)
+library(adegenet)
+library(tidyverse)
+
+#Install the required packages
+#install.packages("proxy")
+#install.packages("iterpc")
+#install.packages("expm")
+#install.packages("directlabels")
+
+# Load the required libraries
+library(proxy)
+library(iterpc)
+library(expm)
+library(directlabels)
+library(spdep)
+
+# Install required packages
+#install.packages(c("sf", "scatterpie"))
+library(ggplot2)
+library(sf)
+library(scatterpie)
+#install.packages("rnaturalearth")
+library(rnaturalearth)
+library(rnaturalearthdata)
+```
+
+# Data wrangling
+
+To prepeare right vcf file to convert it to map and ped files you need
+to: \* filter out indels and keep just SNPs \* keep only biallelic SNPs
+
+We can do this with plink2:
+
+```{r}
+# Filter out indels and keep only biallelic SNPs
+plink_filter <- paste("./plink2",
+                      "--vcf eagle.vcf",
+                      "--allow-extra-chr",
+                      "--max-alleles 2",
+                      "--min-alleles 2",
+                      "--recode vcf",
+                      "--out eagle_filtered")
+system(plink_filter)
+```
+##### Only plink2 has max and min alleles
+
+
+Now we need to convert it with plink to map and ped format:
+
+```{r}
+#recode in plink
+plink_vcf <- paste("./plink2",
+                    "--vcf eagle_filtered.vcf",
+                    "--allow-extra-chr",
+                    "--recode",
+                    "--out eagle")
+system(plink_vcf)
+```
+
+Import the ped and map files:
+
+```{r}
+# Import the ped and map files
+eagle.ped <- read.table("eagle.ped", header = FALSE, sep = " ")
+#separator is tabulator
+eagle.map <- read.table("eagle.map", header = FALSE, sep = "\t")
+```
+
+Import the metadata about samples:
+
+```{r}
+TableS1 <- read.table("TableS1.csv", sep = ";", header = TRUE)
+View(TableS1)
+```
+
+
+We would like to rewrite FID columns with the sample groups, that are in
+TableS1.csv file in CO column. We can match the samples with the
+TableS1.csv file with the Name column and the first column in ped file:
+
+```{r}
+# Match the samples and rewrite the FID column (V1) with CO values
+eagle.ped$FID <- TableS1$CO[match(eagle.ped$V1, TableS1$Name)]
+
+# Overwrite V1 with the new FID values and remove the extra column
+eagle.ped$V1 <- eagle.ped$FID
+
+# Remove the last column
+eagle.ped$FID <- NULL
+
+# Save the updated .ped file
+write.table(eagle.ped, "eagle_groups.ped", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+##### We like to copy CO column from TableS1 to eagle.ped and we match the column V1 in eagle.ped file with CO and rewrite Name based on that. ped format doesn't accept this CO column so we have to remove it after matching. CO file contains the population name, i.e names of countries 
+
+We would like to rewrite the map file with the chromosome names instead
+of the ENA accession numbers. We can do this with the mapping file
+chromosoms_eagle.csv. We retrieve this data based on the paper about the
+reference genome of the golden eagle
+(<https://pmc.ncbi.nlm.nih.gov/articles/PMC8499043/>).
+
+```{r}
+#read csv for chromosomes
+chr_mapping <- read.table("chromosoms_eagle.csv", header = TRUE, sep = ";")
+
+# Replace V1 in map_data using the mapping file
+eagle.map$V1 <- chr_mapping$Chromosome[match(eagle.map$V1, chr_mapping$ENA_accession)]
+
+# Check for unmatched chromosomes (optional)
+unmatched <- eagle.map$V1[is.na(eagle.map$V1)]
+if (length(unmatched) > 0) {
+  cat("Unmatched chromosomes:", unique(unmatched), "\n")
+}
+
+# View the updated map data
+head(eagle.map)
+
+# Save the updated .map file
+write.table(eagle.map, "eagle_groups.map", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+# Runs of homozygosity
+
+### Important for theoretical part of the exam!!!
+
+## Inbreeding
+
+-   **Definition**: Inbreeding occurs when individuals that are
+    genetically related mate, leading to increased homozygosity (i.e.,
+    the presence of two identical alleles at a genetic locus).
+-   **Effects**:
+    -   **Positive**: Fixing beneficial traits in a population (e.g., in
+        selective breeding).
+    -   **Negative**: Increased likelihood of expressing recessive
+        deleterious alleles, reducing fitness (inbreeding depression).
+
+# Froh (Fraction of the Genome in Runs of Homozygosity)
+
+-   **Runs of Homozygosity (ROH)**: Continuous stretches of the genome
+    where all loci are homozygous (e.g., `AA AA AA` or `GG GG GG`).
+-   **Froh Calculation**:
+
+$F_{ROH} = \frac{\text{Total length of ROH segments (bp)}}{\text{Total length of the genome (bp)}}$
+
+-   A higher Froh indicates greater inbreeding.
+
+-   By calculating Froh, we can infer the genetic contribution of
+    relatedness in a population.
+
+Runs of Homozygosity (ROH) and measures of inbreeding are important
+concepts in population and evolutionary genetics. They provide insight
+into the genetic health, population structure, and demographic history
+of a species or population.
+
+**What Are Runs of Homozygosity (ROH)?** \* Definition: ROH are
+continuous stretches of DNA where the alleles are homozygous (identical)
+across all SNP loci. These regions are typically inherited from common
+ancestors. \* Importance: \* Reflects past inbreeding. \* Can identify
+areas of the genome under selection. \* Highlights demographic history,
+such as bottlenecks or isolation.
+
+**Causes of ROH**
+
+-   Inbreeding: Offspring of related individuals inherit large
+    homozygous segments from common ancestors.
+-   Population Bottlenecks: Small population sizes result in reduced
+    genetic diversity, increasing the likelihood of ROH.
+-   Selection: Regions under strong positive selection may show extended
+    homozygosity.
+
+**Inbreeding Coefficient (FROH)** \* Definition: FROH is the proportion
+of the genome in ROH relative to the total genome size. \* Formula:
+
+$F_{ROH} = \frac{\text{Total length of ROH segments (bp)}}{\text{Total length of the genome (bp)}}$
+
+#### **Using Manhattan Plots to Visualize ROH**
+
+-   **What They Show**:
+
+    -   Manhattan plots visualize the percentage of SNPs in ROH across
+        chromosomes.
+
+    -   Each chromosome is represented on the x-axis, and the percentage
+        of SNPs in ROH is on the y-axis.
+
+-   **Interpretation**:
+
+    -   High peaks suggest chromosomes with more SNPs in ROH, indicating
+        regions of high homozygosity.
+
+    -   Patterns can reveal genomic hotspots of inbreeding or selection.
+
+#### **Violin Plots to Represent FROH**
+
+-   **Purpose**:
+
+    -   Violin plots display the distribution of FROH values across
+        individuals or groups.
+
+    -   They combine a boxplot with a density plot, showing both summary
+        statistics and data distribution.
+
+-   **Interpretation**:
+
+    -   Wide areas indicate a high frequency of specific FROH values.
+
+    -   Narrow areas or tails show outliers.
+
+#### **Example Output**
+
+Here\'s a breakdown of typical output for ROH classes:
+
+| Class   | Length Range (Mb)                | Total ROHs | \% of Genome Covered |
+|----------|------------------------------|-----------------|----------------|
+| Class 1 | <2 Mb< 2 \, \text{Mb}\<2Mb       | 500        | 10%                  |
+| Class 2 | 2−4 Mb2 - 4 \, \text{Mb}2−4Mb    | 300        | 15%                  |
+| Class 3 | 4−8 Mb4 - 8 \, \text{Mb}4−8Mb    | 200        | 20%                  |
+| Class 4 | 8−16 Mb8 - 16 \, \text{Mb}8−16Mb | 50         | 10%                  |
+| Class 5 | >16 Mb> 16 \, \text{Mb}\>16Mb    | 10         | 5%                   |
+
+### **Interpreting the Classes**
+
+1.  **Class-Specific Patterns**:
+
+    -   **Class 1 (short ROHs)**:
+
+        -   Reflect ancient events or population bottlenecks.
+
+    -   **Class 5 (long ROHs)**:
+
+        -   Indicate recent inbreeding.
+
+2.  **Application to Froh**:
+
+    -   $F_{ROH}$​ can be calculated for each class to assess the
+        contribution of ROHs of different lengths to inbreeding.
+
+3.  **Visualization of Classes**:
+
+    -   Use violin or boxplots to compare ROH contributions across
+        classes or populations.
+
+**Measures of Inbreeding**
+
+-   **Froh ( Fraction of the Genome in Runs of Homozygosity)**: The
+    proportion of the genome that is in ROH.
+-   **Fhom (Homogeneity of Runs of Homozygosity)**: The average size of
+    ROH segments in the genome.
+-   **Fhet (Heterozygosity)**: The proportion of heterozygous loci in
+    the genome.
+
+**Interpreting ROH and Inbreeding Measures**
+
+-   **High Froh**: Indicates recent inbreeding or a small effective
+    population size.
+-   **High Fhom**: Suggests ancient inbreeding or selection on specific
+    genomic regions.
+-   **Low Fhet**: Indicates reduced genetic diversity or inbreeding.
+
+**Applications of ROH Analysis**
+
+-   **Conservation Biology**: Assessing genetic health and diversity in
+    endangered species.
+-   **Human Genetics**: Studying the genetic basis of complex traits and
+    diseases.
+-   **Animal Breeding**: Selecting for desirable traits while minimizing
+    inbreeding depression.
+
+**Challenges in ROH Analysis**
+
+-   **Data Quality**: Accurate genotyping and variant calling are
+    essential for identifying ROH.
+-   **Population Structure**: Accounting for population substructure and
+    relatedness is crucial for interpreting ROH patterns.
+-   **Statistical Methods**: Choosing appropriate thresholds and
+    parameters for ROH detection and analysis.
+
+**Conclusion**
+
+Runs of Homozygosity and measures of inbreeding provide valuable
+insights into the genetic history and health of populations. By
+analyzing ROH patterns, researchers can uncover the effects of
+inbreeding, selection, and demographic events on genomic diversity.
+Understanding these concepts is essential for conservation efforts,
+breeding programs, and studies of human genetic variation.
+
+## Perform runs of homozygosity (ROH) analysis in R with detectRUNS package.
+
+### Sliding window:
+
+```{r message=FALSE, eval=FALSE, results='hide'}
+slidingRuns <- slidingRUNS.run(
+  #genotypeFile = genotypeFilePath, 
+  #mapFile = mapFilePath, 
+  genotypeFile = "eagle_groups.ped",
+  mapFile = "eagle_groups.map",
+  windowSize = 15, 
+  threshold = 0.05,
+  minSNP = 20, 
+  ROHet = FALSE, 
+  maxOppWindow = 1, 
+  maxMissWindow = 1,
+  maxGap = 10^6, 
+  minLengthBps = 250000, 
+  minDensity = 1/10^3, # SNP/kbps
+  maxOppRun = NULL,
+  maxMissRun = NULL
+) 
+
+##### This works directly with map and ped files
+
+# Inspect the structure of slidingRuns
+str(slidingRuns)
+
+# Check chromosome data
+unique(slidingRuns$chrom)
+```
+
+### Consecutive runs:
+
+```{r message=FALSE, eval=FALSE, results='hide'}
+consecutiveRuns <- consecutiveRUNS.run(
+  genotypeFile = "eagle_groups.ped",
+  mapFile = "eagle.map",
+  minSNP = 20,
+  ROHet = FALSE,
+  maxGap = 10^6,
+  minLengthBps = 250000,
+  maxOppRun = 1,
+  maxMissRun = 1
+)
+```
+##### Try to repeat the plots for consecutive runs
+
+
+### Summary of runs:
+
+```{r}
+summaryList <- summaryRuns(
+  runs = slidingRuns, mapFile = "eagle_groups.map", genotypeFile = "eagle_groups.ped", 
+  Class = 6, snpInRuns = TRUE)
+```
+
+
+```{r echo=FALSE, results='hide'}
+#See all the posibilities for summaryList
+summaryList$summary_ROH_percentage
+summaryList$summary_ROH_count
+summaryList$summary_ROH_mean_class
+summaryList$summary_ROH_percentage_chr
+summaryList$summary_ROH_count_chr
+summaryList$summary_ROH_mean_chr
+summaryList$summary_ROH_mean_class
+summaryList$result_Froh_genome_wide
+summaryList$result_Froh_chromosome_wide
+summaryList$SNPinRun
+```
+
+### Top runs:
+
+```{r}
+topRuns <- tableRuns(
+  runs =  slidingRuns, mapFile = "eagle_groups.map", genotypeFile = "eagle_groups.ped", 
+  threshold = 0.7)
+
+topRuns
+```
+
+## Plotting ROH
+
+### Manhattan plot:
+
+```{r message=FALSE, eval=FALSE}
+plot_manhattanRuns(
+  runs = slidingRuns, mapFile = "eagle_groups.map", genotypeFile = "eagle_groups.ped")
+```
+
+
+### Violin plot
+
+```{r}
+plot_InbreedingChr(
+  runs = slidingRuns, mapFile = "eagle_groups.map", style = "FrohBoxPlot")
+```
+
+
+# ADMIXTURE 
+
+Admixture is a program that uses a model-based maximum likelihood approach to estimate individual ancestries from multilocus SNP genotype datasets. The program assumes that the sample is a mixture of K ancestral populations. The program estimates individual ancestries and also the allele frequencies in the K ancestral populations. The program is also available as a graphical interface, but we will use it through R. The function is implemented in the dartR package. The function is called gl.run.admixture. The function requires the data in the form of a matrix, where the columns are the samples and the rows are the SNPs. The K parameter specifies the number of ancestral populations. The num.k.rep parameter specifies the number of repetitions for each K. The exec parameter specifies the name of the executable file. The numreps parameter specifies the number of iterations. The burnin parameter specifies the number of iterations to be discarded as burnin. The function returns a list of results. The function also draws a graph of the cross-validation error. 
+
+
+First we need to convert map and ped files to bed format. 
+
+```{bash}
+./plink.exe --file eagle_groups --make-bed --out eagle_groups
+```
+
+For running admixture we need more powerful computer, so we used our server with 64 cores and 256GB of RAM. 
+
+For admixture we can set a lot of things: 
+* number of groups (K)
+* number of threads (j)
+* the output that is saved also in the file
+
+
+admixture --cv filtered_03_LD.bed 2 > admixture_log2.out (base command) (number represents number of groups, here is 2)
+
+for K in 1 2 3; do admixture --cv filtered_03_LD.bed $K -j64 | tee log${K}.out; done (for creating files for multiple group amounts in desired range, here is 1 to 3)
+grep -h CV log*.out (for viewing the CV errors in all existing logs)
+
+```{bash}
+for K in 1 2 3 4 5 6 7 8 9 10; do admixture --cv eagle_groups.bed $K -j64 | tee log${K}.out; done
+grep -h CV log*.out
+```
+
+## Scree plot
+
+First we need to see the CV errors for each K. Based on that we can create scree plot which will help us to determine the optimal number of groups based on elbow method.
+
+```{r scree_plot, echo=FALSE}
+#Load the cv_error file
+cv_error <- read.table("cv_error.csv", header=TRUE, sep=";")
+
+#Plot the scree plot
+cv_error %>%
+  ggplot(aes(y = CV_error, x = K)) +
+  geom_point() +
+  geom_line() +
+  xlab("K") +
+  ylab("Cross-validation error") +
+  theme_bw()
+```
+
+## Prepearing the data for admixture Q plotting
+
+```{r q_files, echo=FALSE}
+# Initialize an empty data frame
+all_data <- tibble()
+
+# Read the sample metadata from fam file
+samples <- read.table("eagle_groups.fam", header=FALSE)
+
+# Loop through K values
+for (k in 2:5) {
+  # Read the admixture Q file
+  data <- read_delim(paste0("eagle_groups.", k, ".Q"),
+                     col_names = paste0("Q", seq_len(k)),  # Correct column names
+                     delim = " ")
+
+  # Add sample names and the current K value
+  data$sample <- samples$V2
+  data$k <- k
+
+  # Reshape the data and ensure Q levels are consistent
+  data <- data %>%
+    pivot_longer(cols = starts_with("Q"),
+                 names_to = "Q",
+                 values_to = "value") %>%
+    mutate(Q = factor(Q, levels = paste0("Q", seq_len(k))))  # Reset factor levels for Q
+
+  # Combine the data
+  all_data <- bind_rows(all_data, data)
+}
+```
+
+
+## Plotting the results of ADMIXTURE
+
+Basic plot: 
+
+```{r basic_admixture_plot}
+#plotting
+all_data %>%
+  ggplot(.,aes(x=sample,y=value,fill=factor(Q))) + 
+  geom_bar(stat="identity",position="stack") +
+  xlab("Sample") + ylab("Ancestry") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_fill_brewer(palette="Set1",name="K",
+                    labels=seq(1:5)) +
+  facet_wrap(~k,ncol=1)
+```
+
+Add lines to separate groups: 
+
+```{r}
+# Merge `samples` and `all_data` to ensure alignment
+aligned_samples <- samples %>%
+  filter(V2 %in% unique(all_data$sample)) %>% # Only keep samples present in the plot
+  mutate(order = match(V2, unique(all_data$sample))) # Map sample order to x-axis position
+
+# Calculate group boundaries for vertical lines
+group_boundaries <- aligned_samples %>%
+  group_by(V1) %>%
+  summarize(position = min(order)) %>%
+  ungroup()
+
+# Add vertical lines to the plot
+all_data %>%
+  ggplot(aes(x = sample, y = value, fill = factor(Q))) + 
+  geom_bar(stat = "identity", position = "stack") +
+  geom_vline(data = group_boundaries, 
+             aes(xintercept = position - 0.5), 
+             color = "black", size = 0.8) + 
+  xlab("Sample") + ylab("Ancestry") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  scale_fill_brewer(palette = "Set1", name = "Q", labels = seq(1:5)) +
+  facet_wrap(~k, ncol = 1, strip.position = "left") +
+  theme(strip.placement = "outside")  # Move facet labels outside the plot area
+
+```
+
+
+Reordering samples by group
+
+
+```{r}
+# Define the desired population order
+desired_order <- c("IS", "GL", "NO", "DK", "ES", "TU")
+
+# Reorder and align the samples and groups
+samples <- samples %>%
+  mutate(
+    V1 = factor(V1, levels = desired_order), # Reorder groups
+    V2 = factor(V2, levels = unique(V2[order(match(V1, desired_order))])) # Reorder samples within groups
+  )
+
+# Align `all_data` to the reordered samples
+all_data <- all_data %>%
+  mutate(sample = factor(sample, levels = levels(samples$V2)))
+
+# Calculate group boundaries for vertical lines
+group_boundaries <- samples %>%
+  mutate(order = as.numeric(V2)) %>% # Get numeric x-axis positions
+  group_by(V1) %>%
+  summarize(position = max(order) + 1, .groups = "drop") # Get last position of each group
+
+# Plot with vertical lines and simplified code
+all_data %>%
+  ggplot(aes(x = sample, y = value, fill = factor(Q))) + 
+  geom_bar(stat = "identity", position = "stack") +
+  geom_vline(data = group_boundaries, 
+             aes(xintercept = position - 0.5), 
+             color = "black", size = 0.8) + 
+  xlab("Sample") + ylab("Ancestry") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 60, hjust = 1),
+    strip.placement = "outside",
+    strip.background = element_blank()
+  ) +
+  scale_fill_brewer(palette = "Set1", name = "Q", labels = seq(1:5)) +
+  facet_wrap(~k, ncol = 1, strip.position = "left")
+
+```
+
+## Plot the admixture in pie charts on a map
+
+```{r}
+# Split the data into separate dataframes for each Q value
+data_split <- split(all_data, all_data$k)
+
+# Create separate dataframes for each Q value
+#data_K1 <- data_split[[1]]
+data_K2 <- data_split[[1]]
+data_K3 <- data_split[[2]]
+data_K4 <- data_split[[3]]
+data_K5 <- data_split[[4]]
+
+#Add the groups column to the dataframes
+#map the groups to the dataframes with V1 and V2 from samples dataframe
+#create a new column group in the dataframes
+# Add the group column to the data_Q1 dataframe
+data_K2 <- data_K2 %>%
+  left_join(samples, by = c("sample" = "V2")) %>%  # Join based on matching `sample` (data_Q2) and `V2` (samples)
+  select(-V1)  # Remove unnecessary `V1` column, now mapped to `group`
+
+# Now, `group` is assigned based on `V1` from the `samples` dataframe
+data_K2$group <- samples$V1[match(data_K2$sample, samples$V2)]
+
+data_K3 <- data_K3 %>%
+  left_join(samples, by = c("sample" = "V2")) %>%  # Join based on matching `sample` (data_Q3) and `V2` (samples)
+  select(-V1)  # Remove unnecessary `V1` column, now mapped to `group`
+
+# Now, `group` is assigned based on `V1` from the `samples` dataframe
+data_K3$group <- samples$V1[match(data_K3$sample, samples$V2)]
+
+data_K4 <- data_K4 %>%
+  left_join(samples, by = c("sample" = "V2")) %>%  # Join based on matching `sample` (data_Q4) and `V2` (samples)
+  select(-V1)  # Remove unnecessary `V1` column, now mapped to `group`
+
+# Now, `group` is assigned based on `V1` from the `samples` dataframe
+data_K4$group <- samples$V1[match(data_K4$sample, samples$V2)]
+
+data_K5 <- data_K5 %>%
+  left_join(samples, by = c("sample" = "V2")) %>%  # Join based on matching `sample` (data_Q5) and `V2` (samples)
+  select(-V1)  # Remove unnecessary `V1` column, now mapped to `group`
+
+# Now, `group` is assigned based on `V1` from the `samples` dataframe
+data_K5$group <- samples$V1[match(data_K5$sample, samples$V2)]
+
+
+# Calculate the mean for each ancestry component by Population
+mean_k3_pop <- data_K3 %>%
+  group_by(group) %>%
+  summarise(
+    Q1 = mean(value[Q == "Q1"], na.rm = TRUE),
+    Q2 = mean(value[Q == "Q2"], na.rm = TRUE),
+    Q3 = mean(value[Q == "Q3"], na.rm = TRUE)
+  )
+
+# Calculate the mean for each ancestry component by Population
+mean_k4_pop <- data_K4 %>%
+  group_by(group) %>%
+  summarise(
+    Q1 = mean(value[Q == "Q1"], na.rm = TRUE),
+    Q2 = mean(value[Q == "Q2"], na.rm = TRUE),
+    Q3 = mean(value[Q == "Q3"], na.rm = TRUE),
+    Q4 = mean(value[Q == "Q4"], na.rm = TRUE)
+  )
+
+# Calculate the mean for each ancestry component by Population
+mean_k5_pop <- data_K5 %>%
+  group_by(group) %>%
+  summarise(
+    Q1 = mean(value[Q == "Q1"], na.rm = TRUE),
+    Q2 = mean(value[Q == "Q2"], na.rm = TRUE),
+    Q3 = mean(value[Q == "Q3"], na.rm = TRUE),
+    Q4 = mean(value[Q == "Q4"], na.rm = TRUE),
+    Q5 = mean(value[Q == "Q5"], na.rm = TRUE)
+  )
+```
+
+
+Prepeare the dataset for ggplot
+
+```{r}
+# Example Dataframe
+data_coord <- data.frame(
+  Population = c("Greenland", "Denmark", "Norway", "Iceland", "Turkey", "Estonia"),
+  Group = c("GL", "DK", "NO", "IS", "TU", "ES"),
+  Longitude = c(-42, 10, 8, -21, 35, 25.0),
+  Latitude = c(64, 56, 60, 64, 39, 58.6))
+
+#Map the data_coord to the mean_k3_pop dataframe
+#Join the dataframes based on the group column
+#Add the Longitude and Latitude columns to the mean_k3_pop dataframe
+mean_k3_pop <- mean_k3_pop %>%
+  left_join(data_coord, by = c("group" = "Group"))
+
+#Map the data_coord to the mean_k4_pop dataframe
+#Join the dataframes based on the group column
+#Add the Longitude and Latitude columns to the mean_k4_pop dataframe
+mean_k4_pop <- mean_k4_pop %>%
+  left_join(data_coord, by = c("group" = "Group"))
+
+#Map the data_coord to the mean_k5_pop dataframe
+#Join the dataframes based on the group column
+#Add the Longitude and Latitude columns to the mean_k5_pop dataframe
+mean_k5_pop <- mean_k5_pop %>%
+  left_join(data_coord, by = c("group" = "Group"))
+```
+
+
+Create the plot for K = 3
+
+```{r}
+# Create the plot for K = 3
+# Example Map (using Europe shapefile or world map)
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+# Reproject the world map to Robinson projection (EPSG:54030)
+world_transformed <- st_transform(world, crs = 3395)
+
+# Plot with the Mercator projection
+ggplot() +
+  # Add the reprojected world map
+  geom_sf(data = world, fill = "gray90", color = "gray30") +  
+  # Add pie charts for each population
+  geom_scatterpie(
+    data = mean_k3_pop,  # Data with the mean values for each population
+    aes(x = Longitude, y = Latitude, group = Population), 
+    cols = c("Q1", "Q2", "Q3"),  # Columns for the pie chart
+    pie_scale = 0.8  # Adjust size of pie charts
+  ) +
+  # Apply the Mercator projection for the pie charts
+  #coord_sf(crs = st_crs(4326)) +
+  coord_sf(crs = st_crs(4326), xlim = c(-50, 40), ylim = c(35, 70)) +  # Focus on Europe
+  theme_minimal() +
+  labs(title = "Admixture Pie Charts Map of Europe K = 3")
+```
+
+
+Create the plot for K = 4
+
+```{r}
+# Plot with the Mercator projection
+ggplot() +
+  # Add the reprojected world map
+  geom_sf(data = world, fill = "gray90", color = "gray30") +  
+  # Add pie charts for each population
+  geom_scatterpie(
+    data = mean_k4_pop,  # Data with the mean values for each population
+    aes(x = Longitude, y = Latitude, group = Population), 
+    cols = c("Q1", "Q2", "Q3", "Q4"),  # Columns for the pie chart
+    pie_scale = 0.8  # Adjust size of pie charts
+  ) +
+  # Apply the Mercator projection for the pie charts
+  #coord_sf(crs = st_crs(4326)) +
+  coord_sf(crs = st_crs(4326), xlim = c(-50, 40), ylim = c(35, 70)) +  # Focus on Europe
+  theme_minimal() +
+  labs(title = "Admixture Pie Charts Map of Europe K = 4")
+```
+
+
+Create the plot for K = 5
+
+```{r}
+# Plot with the Mercator projection
+ggplot() +
+  # Add the reprojected world map
+  geom_sf(data = world, fill = "gray90", color = "gray30") +  
+  # Add pie charts for each population
+  geom_scatterpie(
+    data = mean_k5_pop,  # Data with the mean values for each population
+    aes(x = Longitude, y = Latitude, group = Population), 
+    cols = c("Q1", "Q2", "Q3", "Q4", "Q5"),  # Columns for the pie chart
+    pie_scale = 0.8  # Adjust size of pie charts
+  ) +
+  # Apply the Mercator projection for the pie charts
+  #coord_sf(crs = st_crs(4326)) +
+  coord_sf(crs = st_crs(4326), xlim = c(-50, 40), ylim = c(35, 70)) +  # Focus on Europe
+  theme_minimal() +
+  labs(title = "Admixture Pie Charts Map of Europe K = 5")
+```
+
+
+
+

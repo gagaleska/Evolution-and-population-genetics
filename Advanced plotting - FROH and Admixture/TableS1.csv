@@ -1,0 +1,93 @@
+Time;Name;CO;Loc;Year;Sex;Maturity;Sample type;Seq;Mean_depth_all;Mean_depth;Frac._missing_SNPs
+Con;A6512;IS;Faxaflï¿½;2003;f;nestling;Blood EDTA;BGI;17.01;16.65;12
+Con;A6517;IS;Faxaflï¿½;2003;f;nestling;Blood EDTA;BGI;17.39;17;10
+Con;A6533;IS;N-Breidafjordur;2003;m;nestling;Blood EDTA;BGI;16.03;15.81;19
+Con;A6541;IS;S-Breidafjordur;2003;f;nestling;Blood EDTA;BGI;14.36;14.52;43
+Con;A6551;IS;Vestfirdir;2003;m;nestling;Blood EDTA;BGI;16.72;16.42;14
+Con;A6552;IS;N-Breidafjordur;2003;f;nestling;Blood EDTA;BGI;14.18;14.36;45
+Con;A7002;IS;S-Breidafjordur;2004;-;nestling;Blood EDTA;BGI;17.16;16.78;11
+Con;A7028;IS;Hï¿½ï¿½naf;2004;m;nestling;Blood EDTA;BGI;17.27;16.89;10
+Con;A7029;IS;S-Beidafjordur;2004;f;nestling;Blood EDTA;BGI;16.28;16.01;16
+Con;A7043;IS;S-Breidafjordur;2005;m;nestling;Blood EDTA;BGI;16.97;16.64;13
+Con;A7053;IS;N-Breidafjordur;2005;f;nestling;Blood EDTA;BGI;15.92;15.71;20
+Con;A7057;IS;N-Breidafjordur;2005;-;nestling;Blood EDTA;BGI;14.91;14.93;34
+Con;A7067;IS;S-Breidafjordur;2006;m;nestling;Blood EDTA;BGI;17.78;17.36;9
+Con;A7073;IS;S-Breidafjordur;2006;-;nestling;Blood EDTA;BGI;15.61;15.48;24
+Con;A7074;IS;N-Breidafjordur;2007;-;nestling;Blood EDTA;BGI;17.56;17.15;0.01
+Con;A7093;IS;S-breidafjordur;2007;-;nestling;Blood EDTA;BGI;16.43;16.14;16
+Con;A7094;IS;S-Breidafjordur;2007;-;nestling;Blood EDTA;BGI;17.23;16.85;11
+Con;A7103;IS;Faxaflï¿½;2004;f;nestling;Blood EDTA;BGI;14.65;14.9;48
+Con;A7116;IS;Faxaflï¿½;2006;-;nestling;Blood EDTA;BGI;17.17;16.79;11
+Con;A7134;IS;S-Breidafjordur;2008;-;nestling;Blood EDTA;BGI;17.09;16.75;13
+Con;A7138;IS;S-Breidafjordur;2008;f;nestling;Blood EDTA;BGI;17.25;16.87;11
+Con;A7159;IS;Hï¿½ï¿½naf;2008;m;nestling;Blood EDTA;BGI;17.3;16.95;12
+Con;A7161;IS;Vestfirdir;2009;f;nestling;Blood EDTA;BGI;18.23;17.77;7
+Con;A7168;IS;N-Breidafjordur;2009;m;nestling;Blood EDTA;BGI;17.71;17.3;9
+Con;A7206;IS;S-Breidafjordur;2009;m;nestling;Blood EDTA;BGI;13.74;14.12;58
+Con;AA10;NO;Ertvï¿½ï¿½;2007;f;post nestling;Toepad;NMTU;14.71;14.9;45
+Con;BB32;NO;Bodï¿;2008;-;post nestling;Toepad;NMTU;38.28;37.44;11
+Con;BB34;NO;Hï¿½ï¿½manntjï;2009;m;post nestling;Toepad;NMTU;11.2;13.71;210
+Con;BB35;NO;Tettila;2010;f;post nestling;Toepad;NMTU;10.19;13.51;270
+Con;BB36;NO;Frï¿½ï¿½varp, Elvala;2011;m;post nestling;Toepad;NMTU;9.04;13.95;373
+Con;BB37;NO;Vikdalen;2011;-;post nestling;Toepad;NMTU;17.48;17.52;34
+Con;BB38;NO;Verma;2013;f;post nestling;Toepad;NMTU;4.59;26.83;835
+Con;AA11;NO;Elgskaret;2013;f;post nestling;Toepad;NMTU;11.66;13.1;139
+Con;AA13;NO;Snï¿½ï¿½sa;2014;m;post nestling;Toepad;NMTU;41.39;40.05;0
+Con;BB40;NO;Olsvik;2012;f;post nestling;Toepad;NMTU;11.71;15.33;262
+Con;BB41;NO;Risvï¿½;2012;m;post nestling;Toepad;NMTU;9.03;16.01;454
+Con;CC19;NO;Hesthï¿½ï¿½g;2009;f;post nestling;Toepad;NMTU;17.74;17.78;35
+Con;DK1;DK;Prï¿½ï¿½stï¿½ï¿½,;2016;-;adult;Skin/muscle;BGI;15.99;15.82;22
+Con;DK2;DK;Skudelev, Sealand;2016;-;adult;Skin/muscle;BGI;18.1;17.68;10
+Con;DK3;DK;Sorï¿½ï¿½, Zea;2018;-;adult;Skin/muscle;BGI;12.84;13.95;110
+Con;DK4;DK;Klejs, Zealand;2018;-;adult;Skin/muscle;BGI;15.17;15.66;62
+Con;DK6;DK;-;2016;-;adult;Skin/muscle;BGI;16.6;16.55;30
+Con;DK8;DK;Haderslev, Jutland;2015;f;nestling;Full blood;BGI;14.06;14.35;52
+Con;DK12;DK;Filsï¿½ï¿½, Jut;2015;m;nestling;Full blood;BGI;17.99;17.58;10
+Con;DK13;DK;Filsï¿½ï¿½, Jut;2015;m;nestling;Full blood;BGI;15.41;15.36;29
+Con;DK16;DK;Hyllekrog, Lolland;2015;m;nestling;Full blood;BGI;17.16;16.83;14
+Con;DK17;DK;Hyllekrog, Lolland;2015;f;nestling;Full blood;BGI;14.21;14.45;48
+Con;DK21;DK;Kastrup, CPH;2015;-;adult;Skin/muscle;BGI;13.04;14.21;112
+Con;E1;ES;Spithami, Lï¿½ï¿½;2015;f;nestling;Full blood;BGI;14.36;14.55;45
+Con;E3;ES;Harju, Lï¿½ï¿½;2015;m;nestling;Full blood;BGI;16.86;16.57;15
+Con;E6;ES;Kiili, Lï¿½ï¿½;2015;m;nestling;Full blood;BGI;16.95;16.63;14
+Con;GL1;GL;-;>1990;-;-;Full blood;BGI;17.63;17.15;11
+Con;GL2;GL;Sisimiut;1990;f;immature;Full blood;BGI;17.85;17.45;11
+Con;GL3;GL;Nuuk;1993;f;adult;Full blood;BGI;14.81;14.86;36
+Con;GL4;GL;Ameralik;1992;f;adult;Full blood;BGI;17.41;17.07;13
+Con;GL7;GL;Nanortalik;1996;f;immature;Full blood;BGI;16.44;16.18;17
+Con;GL9;GL;Nuuk;1996;-;-;Full blood;BGI;16.52;16.26;17
+Con;GL10;GL;Nuuk;2011;-;-;Full blood;BGI;17.63;17.37;18
+Con;GL15;GL;-;>2013;-;adult;Full blood;BGI;14.61;14.72;40
+Con;GL16;GL;Nanortalik;2017;-;adult;Full blood;BGI;16.92;17.58;12
+Con;GL22;GL;-;1999;-;-;Skin/muscle;BGI;13.84;14.61;84
+Con;GL26;GL;Paamiut;2013;-;-;Skin/muscle;BGI;14;16.41;174
+Con;GL27;GL;Maniitsoq;2013;-;-;Skin/muscle;BGI;16.15;16.55;56
+His;DKH2;DK;-;1907;-;immature=<;Toepad;deCODE;5.94;27.34;790
+His;DKH3;DK;-;1900;-;immature=<;Toepad;deCODE;26.49;25.68;2
+His;DKH7;DK;Hjelm;1898;m;immature=<;Toepad;deCODE;8.73;14.05;399
+His;DKH12;DK;Oxhold, Jylland;1897;f;immature=<;Toepad;deCODE;9.81;13.35;289
+His;DKH14;DK;-;1909;-;immature=<;Toepad;deCODE;4.1;65.83;939
+His;GLH1;GL;-;1919;-;immature=<;Toepad;deCODE;6.35;20.8;705
+His;GLH2;GL;-;1885;-;immature=<;Toepad;deCODE;10.8;13.39;220
+His;GLH3;GL;Nuuk;1898;-;immature=<;Toepad;deCODE;9.16;14.12;372
+His;GLH4;GL;-;1920;m;immature=<;Toepad;deCODE;35.81;34.66;0
+His;GLH8;GL;Kangï¿½ï¿½;1919;f;immature=<;Toepad;deCODE;28.92;28.02;1
+His;GLH14;GL;-;1906;-;immature=<;Toepad;deCODE;8.19;14.76;463
+His;GLH15;GL;-;1892;-;immature=<;Toepad;deCODE;4.5;41.11;894
+His;GLH20;GL;-;1919;-;immature=<;Toepad;deCODE;8.23;14.74;460
+His;ISH4;IS;Hvalfjï¿½ï¿½rdur, SW-Ice;1950;-;immature;Toepad;deCODE;5.63;23.77;771
+His;ISH6;IS;N-Iceland;<1946;-;immature;Toepad;deCODE;5.78;25.03;776
+His;K9;NO;ýýstfjorden;1916;f;immature=<;Toepad;Mike / NMTU;4.88;36.69;871
+His;K7;NO;ýýstfjorden;1916;f;immature=<;Toepad;Mike / NMTU;14.45;14.71;50
+His;K8;NO;ýýstfjorden;1916;f;immature=<;Toepad;Mike / NMTU;5.25;32.46;843
+His;K5;NO;Hitra;1904;m;immature=<;Toepad;Mike / NMTU;9.82;13.25;283
+His;K6;NO;Hitra;1904;m;immature=<;Toepad;Mike / NMTU;7;17.97;623
+His;K1;NO;Rï¿½ï¿½;1925;f;immature=<;Toepad;Mike / NMTU;9.73;13.43;300
+His;K2;NO;Rï¿½ï¿½;1925;f;immature=<;Toepad;Mike / NMTU;5.73;26.64;792
+His;K4;NO;Hitra;1902;m;immature=<;Toepad;Mike / NMTU;8.21;15.66;493
+His;NOH2;NO;Kristiansund;1922;f;immature=<;Toepad;deCODE;11.69;13.38;155
+His;NOH4;NO;Kristiansund;1922;f;immature=<;Toepad;deCODE;13.52;14.18;78
+His;NOH5;NO;Kristiansund;1922;m;immature=<;Toepad;deCODE;9.46;13.38;316
+His;NOH6;NO;Sundfjord;1937;m;immature=<;Toepad;deCODE;4.74;42.79;893
+His;NOH7;NO;Sognefjord;1936;m;immature=<;Toepad;deCODE;3.94;69.73;945
+His;TUH1;TU;Istanbul;1934;f;adult;Toepad;deCODE;14.14;14.64;66

@@ -1,0 +1,19 @@
+PLINK v2.0.0-a.6.0LM 64-bit Intel (11 Nov 2024)
+Options in effect:
+  --allow-extra-chr
+  --export vcf
+  --max-alleles 2
+  --min-alleles 2
+  --out eagle_filtered
+  --vcf eagle.vcf
+
+Hostname: pop-os
+Working directory: /home/evgenija/Desktop/Evgenija Gagaleska /famnit 3rd year/Evolution and population genetics/Advanced plotting - FROH and Admixture
+Start time: Tue Dec 10 14:58:28 2024
+
+Random number seed: 1733839108
+15386 MiB RAM detected, ~5184 available; reserving 5120 MiB for main workspace.
+Using up to 16 threads (change this with --threads).
+Error: Failed to open eagle.vcf : No such file or directory.
+
+End time: Tue Dec 10 14:58:28 2024

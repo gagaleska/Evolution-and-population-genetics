@@ -1,0 +1,32 @@
+PLINK v1.9.0-b.7.7 64-bit (22 Oct 2024)
+Options in effect:
+  --allow-extra-chr
+  --chr-set 38
+  --file NordicDogs_4mars2014
+  --out NordicDogs_corr
+  --recode ped
+
+Hostname: pop-os
+Working directory: /home/evgenija/Desktop/Evgenija Gagaleska /famnit 3rd year/Evolution and population genetics/Population structure visualization
+Start time: Tue Dec  3 15:37:33 2024
+
+Random number seed: 1733236653
+15386 MB RAM detected; reserving 7693 MB for main workspace.
+Scanning .ped file... done.
+Performing single-pass .bed write (165293 variants, 48 samples).
+--file: NordicDogs_corr-temporary.bed + NordicDogs_corr-temporary.bim +
+NordicDogs_corr-temporary.fam written.
+165293 variants loaded from .bim file.
+48 samples (0 males, 0 females, 48 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to NordicDogs_corr.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 48 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.992601.
+165293 variants and 48 samples pass filters and QC.
+Note: No phenotypes present.
+--recode ped to NordicDogs_corr.ped + NordicDogs_corr.map ... done.
+
+End time: Tue Dec  3 15:37:33 2024

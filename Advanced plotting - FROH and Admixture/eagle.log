@@ -1,0 +1,16 @@
+PLINK v2.0.0-a.6.0LM 64-bit Intel (11 Nov 2024)
+Options in effect:
+  --allow-extra-chr
+  --export
+  --out eagle
+  --vcf eagle_filtered.vcf
+
+Hostname: pop-os
+Working directory: /home/evgenija/Desktop/Evgenija Gagaleska /famnit 3rd year/Evolution and population genetics/Advanced plotting - FROH and Admixture
+Start time: Tue Dec 10 14:59:12 2024
+
+Error: --export requires at least one output format.  (Did you forget 'ped' or
+'vcf'?)
+For more info, try "plink2 --help <flag name>" or "plink2 --help | more".
+
+End time: Tue Dec 10 14:59:12 2024

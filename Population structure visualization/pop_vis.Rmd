@@ -1,0 +1,200 @@
+---
+title: "Population structure"
+author: "Urška Gerič"
+date: "2024-12-03"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r warning=FALSE, message=FALSE}
+# Load the required libraries
+library(dartR)
+# library(detectRUNS)
+library(adegenet)
+library(tidyverse)
+
+# Install the required packages
+#install.packages("proxy")
+#install.packages("iterpc")
+#install.packages("expm")
+#install.packages("directlabels")
+#install.packages("MASS")
+
+# Load the required libraries
+library(proxy)
+library(iterpc)
+library(expm)
+library(directlabels)
+library(MASS)
+```
+
+
+
+# Import the data
+
+Something is wrong with the data, so we need to correct it:
+
+```{r}
+corr_data <- paste("./plink",
+                   "--file NordicDogs_4mars2014",                # PLINK binary input files (prefix only)
+                   "--export ped",                 # Specify 'ped' as the output format
+                   "--allow-extra-chr",
+                   "--chr-set 38",
+                   "--out NordicDogs_corr")        # Specify output prefix
+system(corr_data)
+```
+
+```{r}
+dogs<-read.PLINK("NordicDogs.raw", ped.file = "NordicDogs_corr.ped", map.file = "NordicDogs_corr.map")
+dogs<-gl.compliance.check(dogs)
+```
+
+# POPULACIJSKA STRUKTURA
+
+## PCA - Principal component analysis
+
+Principal component analysis (PCA) is a statistical procedure that is commonly used in genomics to reduce the dimensionality of large datasets. It reduces the complexity of data sets while preserving the covariance of the data. Covariance is a measure that determines how two random variables are related. The results of PCA are used to design studies, identify and describe individuals and populations, and draw historical and ethnobiological conclusions about origin, evolution, dispersion, and relatedness. It is a powerful tool that can be used to visualize data, identify patterns, and uncover hidden relationships between variables.
+
+Population genomics -\> many SNPs for many individuals!
+
+To create a PCA graph, we will use two commands. The first command calculates the PCA and the second command draws the graph. The command used to calculate the PCA in dartR is gl.pcoa(). You need to define the name of the object in which you want to save the PCA calculation data.
+
+If I have a question in the exam, I have to specify how many variants I have depending on how many principal components I choose. For example if I choose 1 and 2, I should count on y-axis and comment this on the axis report.
+
+-   E.g. pca.
+
+![Calculation PCA](calc_pca.png)
+
+![Eigenvalues and eigenvectors](eigen.png) ![Princile components](scree_plot.png)
+
+Calculate principle components:
+
+```{r}
+pca <- gl.pcoa(dogs)
+```
+
+![Plot](plot_pca.png)
+
+Two graphs are drawn, the Scree Plot, which is intended to explain the PCA and decide how many components need to be preserved. So, the first component (value 1 on the PCA Axis) contributes to the explanation of 38% of the variance in our data, the second explains 10%, ... To display the data on a 2D graph, always take the 1st and 2nd component, as they contribute to the greatest explanation of variance. To draw the graph, use the following command:
+
+```{r}
+gl.pcoa.plot(x = dogs, glPca = pca)
+```
+
+The graph visualizes the structure of our data. Each point represents one individual/sample, which is colored based on the population to which it belongs. From the graph, we can see that we have 4 populations (IS, NBS, NBH, and LH). On the X-axis we have the 1st component, which explains 38% of the variance and on the Y-axis the 2nd component, which explains 10.5% of the variance. From the graph, we can see that the LH population differs the most from the other 3 populations. The other 3 populations also differ from each other, but this difference is not so great.
+
+If you want to play a little, you can also draw a 3D graph by adding the variable "xaxis = 3".
+
+```{r}
+gl.pcoa.plot(x = dogs, glPca = pca, zaxis = 3)
+# z-axis = 3 means the third principal component 
+```
+
+In 3D view, we also have the third component, which explains 7.5% of the variance.
+
+## NEIGHBOUR JOINING TREE
+
+In the 1st set of exercises, you learned about phylogenetic trees. Such trees can also be calculated and drawn to summarize genetic similarities between populations. The command is as follows:
+
+```{r}
+gl.tree.nj(dogs, type = "phylogram")
+```
+
+The tree is interpreted in a similar way as in phylogeny, although in this case there are only 4 populations.
+
+## STRUCTURE
+
+The STRUCTURE program is used to analyze genotype data with multiple loci to explore population structure. The program allows the analysis of different populations, assigning individuals to populations, studying hybrid zones, identifying migrants and mixed individuals, ... Structure is also a program with a graphical interface, which would mean that we have to export the data from R, enter it in the program and click for analysis... because this takes time, we will use STRUCTURE through R, the function is implemented in the dartR package. It only needs to have Structure.exe in the folder where we work. If you are working on Mac/Linux, you need to have the correct file in the folder (structureLinux or structureMac) and change "exec=" in the command. The k.range parameter describes the number of subpopulations that make up the entire population. Since we do not know how many true subpopulations we have in our data set, we will calculate the structure for 1 to 10 possible subpopulations. With the num.k.rep parameter, we choose the number of repetitions for each K. in our case this will be 2. If we wanted to calculate K from 1 to 10 and 2 repetitions on all SNPs, we would be here for quite some time, so for the purpose of the exercise we will use only the first 1000 SNPs. We specify this by adding [,1:1000] after the name of our object that contains the SNP data.
+
+```{r}
+str <- gl.run.structure(dogs[,1:1000], k.range= 1:6, num.k.rep = 2, exec = "./structure", numreps=200, burnin=100)
+```
+This was different for everyone!!!
+
+
+When it finishes, 4 graphs are drawn. For us, the $\Delta$K graph is important. If the graph is not displayed, use the command gl.evanno(str) $\Delta$K estimates the number of calculated subpopulations that best estimate the structure of our data. We look at $\Delta$K with the highest value. In this case, the highest value is 4, then 2.
+
+To draw a graph of population structure, use the command:
+
+```{r}
+gl.evanno(str)
+gl.plot.structure(str, K=2)
+gl.plot.structure(str, K=4)
+```
+
+Specify the name of the object in which we saved the results of the gl.run.structure command and the number of subpopulations. The graph shows samples (one sample one column) and populations (separated by a thicker line). Each color represents one subpopulation. In our case, we see that each of our populations belongs to its own subpopulation.
+
+## ISOLATION BY DISTANCE
+
+The correlation of genetic diversity between individuals decreases as a function of geographic distance. It is usually the simplest model of the cause of genetic isolation between populations. Migration is usually localized in space, which is why individuals from nearby subpopulations are expected to be more genetically similar. To calculate IBD, in addition to genetic data, we also need coordinates. The IBD command calculates the FST distance and the Euclidean distance (distance in space between individuals).
+
+Before running the command, we need to import the table with the coordinates. We do this with the read.table command, as the data is stored in a .txt file. We need to save the data in an object. We add the header = T parameter, because in our table the column names are in the first row.
+
+```{r}
+coordinates <- read.table("koordinate.txt",header = T)
+as.data.frame(coordinates)
+```
+
+Now we can run the gl.ibd command, which will calculate isolation with distance.
+
+```{r}
+gl.ibd(dogs, coordinates = coordinates[,2-3], distance = "Fst")
+```
+
+The x-axis shows the Euclidean distance, and the y-axis shows the genetic distance. Because the slope of the line is positive (the line goes up), we can conclude that we have isolation with distance in our dataset. If the slope of the line were 0 (horizontal), it would mean that we do not have IBD in our data.
+
+### Density plot
+
+```{r}
+#Prepeare the matrices
+Dgeo <- as.matrix(dist(coordinates[,2-3]))
+Dgen <- as.matrix(dist(as.matrix(dogs)))
+
+#Calculate density
+dens <- kde2d(as.vector(Dgeo), as.vector(Dgen), n=300)
+
+#Create color palette
+myPal <- colorRampPalette(c("white", "blue", "gold", "orange", "red"))
+
+#Plot all together
+plot(Dgeo, Dgen, pch=20,cex=.5)
+image(dens, col=transp(myPal(300),.7), add=TRUE)
+
+# Calculate distance 
+dist_lm <- lm(as.vector(Dgen) ~ as.vector(Dgeo))
+abline(dist_lm)
+title("Isolation by distance plot")
+```
+
+## Other visualizations
+
+Find explanations for homework for these plots
+
+If we want to calculate identity by descent matrix (IBS matrix) we can run this:
+
+```{r}
+#Calculates an identity by descent matrix
+gl.grm(dogs)
+```
+
+We can also draw a network:
+
+```{r}
+gl.grm.network(x=dogs, G = gl.grm(dogs), method = "kk")
+```
+
+```{r}
+#Mapa (če ne dela v Viewer, odpreš z Zoom.
+#gl.map.interactive(dogs)
+```
+
+Calculating alpha and beta diversity:
+
+```{r}
+gl.report.diversity(dogs) 
+```
